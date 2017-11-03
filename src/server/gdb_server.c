@@ -1149,9 +1149,9 @@ static int gdb_get_registers_packet(struct connection *connection,
 
 	if ((target->rtos != NULL) && (ERROR_OK == rtos_get_gdb_reg_list(connection)))
 		return ERROR_OK;
-
+		
 	retval = target_get_gdb_reg_list(target, &reg_list, &reg_list_size,
-			REG_CLASS_GENERAL);
+			REG_CLASS_GENERAL); //TODO: 实际调用 riscv.c:riscv_get_gdb_reg_list, 返回target->reg_cache->reg_list
 	if (retval != ERROR_OK)
 		return gdb_error(connection, retval);
 
@@ -1168,7 +1168,7 @@ static int gdb_get_registers_packet(struct connection *connection,
 
 	for (i = 0; i < reg_list_size; i++) {
 		if (!reg_list[i]->valid) {
-			retval = reg_list[i]->type->get(reg_list[i]);
+			retval = reg_list[i]->type->get(reg_list[i]); // TODO: 这里get实际调用 riscv-011.c:register_get --> 这个函数会调用 riscv-011.c:reg_cache_get ，但是这时r->valid = false
 			if (retval != ERROR_OK) {
 				LOG_DEBUG("Couldn't get register %s.", reg_list[i]->name);
 				free(reg_packet);

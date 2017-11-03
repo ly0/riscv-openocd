@@ -158,6 +158,8 @@ typedef enum slot {
 
 #define DRAM_CACHE_SIZE		16
 
+static riscv_error_t handle_halt_routine(struct target *target);
+
 struct trigger {
 	uint64_t address;
 	uint32_t length;
@@ -224,6 +226,9 @@ typedef struct {
 static int poll_target(struct target *target, bool announce);
 static int riscv011_poll(struct target *target);
 static int register_get(struct reg *reg);
+static int halt(struct target *target);
+static int handle_halt(struct target *target, bool announce);
+// extern int check_target_state(struct target *target);
 
 /*** Utility functions. ***/
 
@@ -1210,6 +1215,7 @@ static uint64_t reg_cache_get(struct target *target, unsigned int number)
 	struct reg *r = &target->reg_cache->reg_list[number];
 	if (!r->valid) {
 		LOG_ERROR("Register cache entry for %d is invalid!", number);
+
 		assert(r->valid);
 	}
 	uint64_t value = buf_get_u64(r->value, 0, r->size);
@@ -1435,6 +1441,17 @@ static void set_register(struct target *target, int hartid, int regid,
 	assert(hartid == 0);
 	// TODO: propagate errors
 	register_write(target, regid, value);
+}
+
+int check_target_state(struct target *target) {
+	// avoiding get register value in RUNNING status.
+	if (target->state == TARGET_RUNNING) {
+		assert(halt(target) == ERROR_OK);
+		handle_halt(target, 1);
+		assert(target->state == TARGET_HALTED);
+		return ERROR_OK;
+	}
+	return ERROR_FAIL;
 }
 
 static int halt(struct target *target)

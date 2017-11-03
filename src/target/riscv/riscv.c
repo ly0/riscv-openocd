@@ -200,6 +200,8 @@ int riscv_command_timeout_sec = DEFAULT_COMMAND_TIMEOUT_SEC;
 /* Wall-clock timeout after reset. Settable via RISC-V Target commands.*/
 int riscv_reset_timeout_sec = DEFAULT_RESET_TIMEOUT_SEC;
 
+int check_target_state(struct target *target);
+
 static uint32_t dtmcontrol_scan(struct target *target, uint32_t out)
 {
 	struct scan_field field;
@@ -783,7 +785,9 @@ static int riscv_get_gdb_reg_list(struct target *target,
 		LOG_ERROR("Target not initialized. Return ERROR_FAIL.");
 		return ERROR_FAIL;
 	}
-	
+
+	check_target_state(target);
+
 	for (int i = 0; i < *reg_list_size; i++) {
 		assert(target->reg_cache->reg_list[i].size > 0);
 		(*reg_list)[i] = &target->reg_cache->reg_list[i];
